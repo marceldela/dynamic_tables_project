@@ -1,7 +1,8 @@
 import pytest
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from dynamic_app.validators import validate_field_type, validate_field, validate_json
+from dynamic_app.validators import validate_field_type, validate_fields
 
 
 def test_validate_field_type():
@@ -16,20 +17,26 @@ def test_validate_field_type():
         with pytest.raises(serializers.ValidationError):
             validate_field_type(field_type)
 
+def test_validate_fields():
+    field_definitions = {
+        'field1': {'type': 'CharField'},
+        'field2': {'type': 'IntegerField'},
+        'field3': {'type': 'BooleanField'}
+    }
 
-def test_validate_field():
-    with pytest.raises(TypeError):
-        validate_field("test", "int")  # Should raise error as "test" is not of type int
-    assert validate_field("test", "str") is None  # Should return None as "test" is a string
-    with pytest.raises(TypeError):
-        validate_field("test", "bool")  # Should raise error as "test" is not of type bool
+    # Test with valid data
+    valid_data = {
+        'field1': 'text',
+        'field2': 123,
+        'field3': True
+    }
+    validate_fields(valid_data, field_definitions)
 
-
-def test_validate_json():
-    json_data = {"age": 21, "name": "John", "is_student": False}
-    schema = {"age": "int", "name": "str", "is_student": "bool"}
-    assert validate_json(json_data, schema) is None  # Should return None as json_data fits the schema
-
-    wrong_schema = {"age": "str", "name": "str", "is_student": "int"}
-    assert validate_json(json_data,
-                         wrong_schema) == "Incorrect type for field. Expected <class 'str'>, got <class 'int'>"
+    # Test with invalid data
+    invalid_data = {
+        'field1': 123,  # Expected CharField, provided Integer
+        'field2': 'text',  # Expected IntegerField, provided String
+        'field4': True  # Field not defined in field_definitions
+    }
+    with pytest.raises(ValidationError):
+        validate_fields(invalid_data, field_definitions)
