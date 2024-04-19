@@ -1,0 +1,10 @@
+asgiref==3.8.1
+Django==5.0.4
+djangorestframework==3.15.1
+psycopg2-binary==2.9.9
+sqlparse==0.5.0
+pytest==7.4.4
+pytest-mock==3.14.0
+pytest-django==4.8.0
+drf-yasg
+django-filter
