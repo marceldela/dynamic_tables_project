@@ -1,13 +1,9 @@
-from unittest.mock import patch, Mock
-from django.urls import reverse
-from rest_framework import status
 import pytest
 from django.test import RequestFactory
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import force_authenticate
+from django.urls import reverse
+from rest_framework import status
 
-from dynamic_app.models import DynamicModelMetaData
-from dynamic_app.views import DynamicModelCreateView, DynamicModelUpdateView
+from dynamic_app.views import DynamicModelCreateView
 
 
 @pytest.mark.django_db
