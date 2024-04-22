@@ -38,14 +38,14 @@ class DynamicModelMixin:
 
     @staticmethod
     def unregister_and_validate(
-            dynamic_model_metadata: DynamicModelMetaData) -> tuple[Optional[Response], ResponseStatuses]:
+            dynamic_model_metadata: DynamicModelMetaData, new_fields: dict):
         try:
-            dynamic_service.unregister_model(dynamic_model_metadata)
+            dynamic_model_metadata = dynamic_service.unregister_model(dynamic_model_metadata, new_fields=new_fields)
         except Exception as e:
             return Response({'status': 'Failed to unregister model', 'error': str(e)},
                             status=status.HTTP_400_BAD_REQUEST), ResponseStatuses.ERROR
 
-        return None, ResponseStatuses.SUCCESS
+        return dynamic_model_metadata, ResponseStatuses.SUCCESS
 
 
 class DynamicModelCreateView(generics.CreateAPIView, DynamicModelMixin):
@@ -75,15 +75,16 @@ class DynamicModelUpdateView(generics.RetrieveUpdateAPIView, DynamicModelMixin):
         if serializer.is_valid():
             model_name, model_fields = self.extract_model_data(serializer.validated_data)
 
-            unregister_response, response_status = self.unregister_and_validate(dynamic_model_metadata)
+            unregister_response, response_status = self.unregister_and_validate(dynamic_model_metadata, new_fields=model_fields)
             if response_status == ResponseStatuses.ERROR:
                 return unregister_response
 
             try:
-                response = self.create_and_register_model(model_name, model_fields)
+                self.create_and_register_model(model_name, model_fields)
             except Exception as e:
                 return Response({'status': 'Failed to create model', 'error': str(e)},)
+            dynamic_metadata_serializer = DynamicModelMetaDataSerializer(dynamic_model_metadata)
 
-            return Response({'status': f'Model {model_name} updated.', 'model': response.data}, status=status.HTTP_200_OK)
+            return Response({'status': f'Model {model_name} updated.', 'model': dynamic_metadata_serializer.data}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

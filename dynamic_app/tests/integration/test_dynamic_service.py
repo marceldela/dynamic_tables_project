@@ -1,7 +1,6 @@
 import pytest
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured
-from django.db import ProgrammingError
 
 from dynamic_app.models import DynamicModelMetaData
 from dynamic_app.services import DynamicModelService

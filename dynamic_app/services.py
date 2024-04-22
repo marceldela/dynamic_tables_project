@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.apps import apps
 from django.db import models, connection
 from django.db.models.base import ModelBase
@@ -19,7 +21,7 @@ class DynamicModelService:
         return model
 
     @classmethod
-    def create_and_register_model(cls, model_name: str, model_fields: dict) -> models.Model:
+    def create_and_register_model(cls, model_name: str, model_fields: dict, update: bool = False) -> Optional[models.Model]:
         field_mapping = {
             'CharField': models.CharField,
             'IntegerField': models.IntegerField,
@@ -37,15 +39,22 @@ class DynamicModelService:
         with connection.schema_editor() as schema_editor:
             schema_editor.create_model(dynamic_model)
 
+        if update:
+            # We don't need to create new object in case of update
+            return
+
         # Create metadata model
         DynamicModelMetaData.objects.create(model_name=model_name, fields=model_fields_serializable)
         return dynamic_model
 
     @staticmethod
-    def unregister_model(dynamic_model_metadata: DynamicModelMetaData):
+    def unregister_model(dynamic_model_metadata: DynamicModelMetaData, new_fields: dict) -> DynamicModelMetaData:
         model = apps.get_model('dynamic_app', dynamic_model_metadata.model_name)
         with connection.schema_editor() as schema_editor:
             schema_editor.delete_model(model)
 
-        # Remove metadata model
-        dynamic_model_metadata.delete()
+        # Replace metadata model fields
+        dynamic_model_metadata.fields = new_fields
+        dynamic_model_metadata.save()
+
+        return dynamic_model_metadata
