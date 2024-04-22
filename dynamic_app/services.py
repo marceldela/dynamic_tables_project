@@ -40,7 +40,7 @@ class DynamicModelService:
             schema_editor.create_model(dynamic_model)
 
         if update:
-            # We don't need to create new object in case of update
+            # We don't need to create new meta object in case of update
             return
 
         # Create metadata model
